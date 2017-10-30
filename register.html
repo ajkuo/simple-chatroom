@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chatroom</title>
+    <meta charset="utf-8">
+</head>
+<body>
+    <h1>註冊</h1>
+    信箱：<input type="email" id="username" required="required"><br><br>
+    密碼：<input type="password" id="pword" required="required"><br><br>
+    暱稱：<input type="text" id="nickname" required="required"><br><br>
+    <button type="submit" id="btnRegister">送出</button>
+
+    <script src="https://www.gstatic.com/firebasejs/4.6.0/firebase.js"></script>
+    <script>
+      // Initialize Firebase
+        var config = {
+            // Firebase APIkey and config
+        };
+        firebase.initializeApp(config);
+      
+        firebase.auth().onAuthStateChanged(function(user) {
+          if (user) {
+            document.location.href = "index.html";
+          }
+        });
+        //登入
+        var username = document.getElementById("username");
+        var pword = document.getElementById("pword");
+        var nickname = document.getElementById("nickname");
+        var btnRegister = document.getElementById("btnRegister");
+        btnRegister.addEventListener("click", function(){
+            console.log(username.value);
+            firebase.auth().createUserWithEmailAndPassword(username.value, pword.value).then(function(result) {
+                user = firebase.auth().currentUser;
+                console.log(user);
+                user.updateProfile({
+                    displayName: nickname.value
+                });
+                alert("註冊完成！");
+                document.location.href = "login.html";
+            }).catch(function(error) {
+            // Handle Errors here.
+
+            var errorCode = error.code;
+            var errorMsg = error.message;
+            console.log(errorMsg);
+            alert("註冊失敗！");
+          });
+        },false);
+
+    </script>
+</body>
+</html>

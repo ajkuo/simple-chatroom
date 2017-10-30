@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chatroom</title>
+    <meta charset="utf-8">
+    <style type="text/css">
+        html, body {
+            position: relative;
+        }
+
+        body {
+            height: 100%;
+            width: 100%;
+        　   overflow: hidden;
+        }
+
+        ::-webkit-scrollbar {display:none}
+        #txtMsg {
+            width: 89%;
+            height:25px;
+            position: fixed;
+            left: 0;
+            bottom: 0;
+            resize:none;
+        }
+        #btnSendMsg {
+            width: 10%;
+            height: 30px;
+            position: fixed;
+            bottom: 0;
+            right: 0;
+        }
+
+        #crTitle {
+            position: fixed;
+            top: 0;
+            height: 3%;
+        }
+
+        #footerMenu {
+            height: 5%;
+            margin-bottom: 35px;
+        }
+
+        #txtAllMsg {
+            width: 96%;
+            overflow-x: hidden;
+            word-break: break-all;
+            overflow-y: auto;
+            position: fixed;
+            margin-top: 50px;
+            bottom: 35px;
+            top: 50px;
+            margin-right: auto;
+            margin-left: auto;
+            border: thin black solid;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="crTitle">歡迎來到聊天室</h1><button id="btnLogout">登出</button>
+    <div id="txtAllMsg"></div>
+    <div id="footerMenu">
+        <textarea id="txtMsg"></textarea>
+        <button type="submit" id="btnSendMsg">送出</button>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/4.6.0/firebase.js"></script>
+    <script>
+      // Initialize Firebase
+        var config = {
+            // Firebase APIkey and config
+        };
+        firebase.initializeApp(config);
+
+        var db = firebase.database();
+        var userLogin;
+        var userName;
+        firebase.auth().onAuthStateChanged(function(user) {
+          if (user) {
+            userLogin = user;
+            console.log("User is logined", user);
+            if(user.displayName)
+            {
+                userName = user.displayName;
+                dt = new Date();
+                strTime = ('0'+ dt.getHours()).substr(-2) + ":" + ('0'+ dt.getMinutes()).substr(-2) + ":" + ('0'+ dt.getSeconds()).substr(-2);
+                document.getElementById("crTitle").innerHTML = user.displayName + " 歡迎來到聊天室";
+                document.getElementById("txtAllMsg").append(strTime + " [系統] 歡迎加入聊天！");
+            }
+          } else {
+            userLogin = null;
+            console.log("User is not logined yet.");
+            alert("您必須先登入！");
+            document.location.href = "login.html";
+          }
+        });
+
+
+        document.getElementById("txtMsg").addEventListener("keydown", function(e){
+            if (e.keyCode == 13 && !e.shiftKey)
+            {
+                // prevent default behavior
+                e.preventDefault();
+                SendMessage();
+            }
+        });
+        document.getElementById("btnSendMsg").addEventListener("click", function(){
+            SendMessage();
+        });
+
+        dt = new Date();
+        strDate = dt.getFullYear() + "" + ('0'+ (dt.getMonth() + 1)).substr(-2) + "" + ('0'+ dt.getDate()).substr(-2);
+        strNow = dt.getFullYear() + "/" + ('0'+ (dt.getMonth() + 1)).substr(-2) + "/" + ('0'+ dt.getDate()).substr(-2) + " " + ('0'+ dt.getHours()).substr(-2) + ":" + ('0'+ dt.getMinutes()).substr(-2) + ":" + ('0'+ dt.getSeconds()).substr(-2);
+
+        function SendMessage() {
+            if(txtMsg.value != "")
+            {
+                txtMsg = document.getElementById("txtMsg");
+                MsgText = txtMsg.value;
+                user = firebase.auth().currentUser;
+                db.ref(strDate + "/").push({
+                    time: strNow,
+                    username: user.displayName,
+                    text: MsgText,
+                    userid: user.uid
+                });
+                txtMsg.value = "";
+            }
+            else
+            {
+                console.log("Do nothing.");
+            }
+        }
+
+        db.ref(strDate + "/").on('child_added', function(childSnapshot) {   
+            snapshot = childSnapshot;
+            console.log(snapshot);
+            var time = snapshot.child("time").val();
+            time = time.substr(-8);
+            var text = snapshot.child("text").val();
+            var username = snapshot.child("username").val();
+            displayMsg(time, username, text);
+        });
+
+        function displayMsg(time, author, text) {
+            strMsg = "<div>" + time + " [" + author + "] " + text + "</div>"
+            txtAllMsg = document.getElementById("txtAllMsg");
+            txtAllMsg.innerHTML += strMsg;
+            txtAllMsg.scrollTop = txtAllMsg.scrollHeight;  
+        };
+
+        document.getElementById("btnLogout").addEventListener("click", function(){
+            firebase.auth().signOut().then(function() {
+                console.log("User sign out!");
+            }, function(error) {
+            console.log("User sign out error!");
+            });
+        }, false);
+    </script>
+</body>
+</html>

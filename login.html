@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chatroom</title>
+    <meta charset="utf-8">
+</head>
+<body>
+    <h1>登入</h1>
+    帳號：<input type="text" id="username"><br><br>
+    密碼：<input type="password" id="pword"><br><br>
+    <button type="submit" id="btnLogin">Login</button><br><br><br>
+    <button id="btnRegister">以電子信箱註冊</button><br><br> 
+    <button id="btnGoogleRegister">以 Google 帳號登入</button>
+
+    <script src="https://www.gstatic.com/firebasejs/4.6.0/firebase.js"></script>
+    <script>
+      // Initialize Firebase
+        var config = {
+            // Firebase APIkey and config
+        };
+        firebase.initializeApp(config);
+      
+        firebase.auth().onAuthStateChanged(function(user) {
+          if (user) {
+            document.location.href = "index.html";
+          }
+        });
+
+
+        //登入
+        var username = document.getElementById("username");
+        var pword = document.getElementById("pword");
+        var btnLogin = document.getElementById("btnLogin");
+        btnLogin.addEventListener("click", function(){
+            console.log(username.value);
+            firebase.auth().signInWithEmailAndPassword(username.value, pword.value).catch(function(error) {
+                // Handle Errors here.
+                var errorCode = error.code;
+                var errorMessage = error.message;
+                console.log(errorCode);
+                console.log(errorMessage);
+                if(errorCode == "auth/user-not-found")
+                {
+                    console.log("帳號或密碼錯誤。");
+                }
+                else if(errorCode == "auth/invalid-email")
+                {
+                    console.log("信箱格式錯誤。");
+                }
+            })
+        },false);
+
+        document.getElementById("btnRegister").addEventListener("click", function(){
+            document.location.href = "register.html";
+        });
+
+
+        document.getElementById("btnGoogleRegister").addEventListener("click", function(){
+            var provider = new firebase.auth.GoogleAuthProvider(); 
+            firebase.auth().signInWithPopup(provider).then(function(result) {      
+              var token         = result.credential.accessToken;      
+              var user          = result.user;      // 使用者資訊
+              document.location.href = "index.html";
+            }).catch(function(error) {
+              // 處理錯誤
+              var errorCode     = error.code;
+              var errorMessage  = error.message;     
+              var email         = error.email;      // 使用者所使用的 Email
+              var credential    = error.credential;      
+            });
+        });
+
+
+    </script>
+</body>
+</html>
